@@ -437,18 +437,28 @@ bool CapabilityVisitor::visit(SpirvImageSparseTexelsResident *instr) {
 }
 
 namespace {
-bool isImageOpOnUnknownFormat(const SpirvImageOp *instruction) {
-  if (!instruction->getImage() || !instruction->getImage()->getResultType()) {
+bool isStorageImageOpOnUnknownFormat(const SpirvImageOp *instruction) {
+  const SpirvInstruction *image = instruction->getImage();
+  if (const SpirvLoad *load = dyn_cast<SpirvLoad>(image)) {
+    image = load->getPointer();
+  }
+
+  if (!image || !image->getResultType()) {
     return false;
   }
 
-  const ImageType *imageType =
-      dyn_cast<ImageType>(instruction->getImage()->getResultType());
-  if (!imageType || imageType->getImageFormat() != spv::ImageFormat::Unknown) {
+  const SpirvType *resultType = image->getResultType();
+  if (const auto *ptrType = dyn_cast<SpirvPointerType>(resultType)) {
+    resultType = ptrType->getPointeeType();
+  }
+
+  const ImageType *imageType = dyn_cast<ImageType>(resultType);
+  if (!imageType) {
     return false;
   }
 
-  return imageType->getImageFormat() == spv::ImageFormat::Unknown;
+  return imageType->getImageFormat() == spv::ImageFormat::Unknown &&
+    imageType->withSampler() != ImageType::WithSampler::Yes;
 }
 } // namespace
 
@@ -460,7 +470,7 @@ bool CapabilityVisitor::visit(SpirvImageOp *instr) {
   if (instr->isSparse())
     addCapability(spv::Capability::SparseResidency);
 
-  if (isImageOpOnUnknownFormat(instr)) {
+  if (isStorageImageOpOnUnknownFormat(instr)) {
     addCapability(instr->isImageWrite()
                       ? spv::Capability::StorageImageWriteWithoutFormat
                       : spv::Capability::StorageImageReadWithoutFormat);
