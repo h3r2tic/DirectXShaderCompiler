@@ -573,6 +573,18 @@ const StructType *lowerStructType(const SpirvCodeGenOptions &spirvOptions,
 
 } // namespace
 
+bool isVkRawBufferLoad2Intrinsic(const clang::FunctionDecl *FD) {
+  if (!FD->getName().equals("RawBufferLoad2"))
+    return false;
+
+  if (auto *nsDecl = dyn_cast<NamespaceDecl>(FD->getDeclContext())) {
+    if (!nsDecl->getName().equals("vk"))
+      return false;
+  }
+
+  return true;
+}
+
 SpirvEmitter::SpirvEmitter(CompilerInstance &ci)
     : theCompilerInstance(ci), astContext(ci.getASTContext()),
       diags(ci.getDiagnostics()),
@@ -2904,6 +2916,11 @@ SpirvInstruction *SpirvEmitter::doCallExpr(const CallExpr *callExpr,
 
   // Handle 'vk::RawBufferLoad()'
   if (isVkRawBufferLoadIntrinsic(funcDecl)) {
+    return processRawBufferLoad(callExpr);
+  }
+
+  // Handle 'vk::RawBufferLoad2()'
+  if (isVkRawBufferLoad2Intrinsic(funcDecl)) {
     return processRawBufferLoad(callExpr);
   }
 
@@ -8905,6 +8922,9 @@ SpirvEmitter::processIntrinsicCallExpr(const CallExpr *callExpr) {
     retVal = processIntrinsicReadClock(callExpr);
     break;
   case hlsl::IntrinsicOp::IOP_VkRawBufferLoad:
+    retVal = processRawBufferLoad(callExpr);
+    break;
+  case hlsl::IntrinsicOp::IOP_VkRawBufferLoad2:
     retVal = processRawBufferLoad(callExpr);
     break;
   case hlsl::IntrinsicOp::IOP_VkRawBufferStore:

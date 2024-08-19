@@ -6523,6 +6523,8 @@ IntrinsicLower gLowerTable[] = {
 #ifdef ENABLE_SPIRV_CODEGEN
     {IntrinsicOp::IOP_VkRawBufferLoad, UnsupportedVulkanIntrinsic,
      DXIL::OpCode::NumOpCodes},
+    {IntrinsicOp::IOP_VkRawBufferLoad2, UnsupportedVulkanIntrinsic,
+     DXIL::OpCode::NumOpCodes},
     {IntrinsicOp::IOP_VkRawBufferStore, UnsupportedVulkanIntrinsic,
      DXIL::OpCode::NumOpCodes},
     {IntrinsicOp::IOP_VkReadClock, UnsupportedVulkanIntrinsic,

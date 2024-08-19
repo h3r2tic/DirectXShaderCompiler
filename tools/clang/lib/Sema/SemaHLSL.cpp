@@ -300,8 +300,8 @@ enum ArBasicKind {
 #define BPROP_BITS64 0x00000006
 #define BPROP_BITS_NON_PRIM 0x00000007
 
-#define GET_BPROP_SUBTYPE(_Props) ((_Props)&BPROP_SUBTYPE_MASK)
-#define GET_BPROP_BITS(_Props) ((_Props)&BPROP_SUBTYPE_MASK)
+#define GET_BPROP_SUBTYPE(_Props) ((_Props) & BPROP_SUBTYPE_MASK)
+#define GET_BPROP_BITS(_Props) ((_Props) & BPROP_SUBTYPE_MASK)
 
 #define BPROP_BOOLEAN 0x00000010 // Whether the type is bool
 #define BPROP_INTEGER 0x00000020 // Whether the type is an integer
@@ -344,11 +344,11 @@ enum ArBasicKind {
 #define GET_BPROP_PRIM_KIND_SU(_Props)                                         \
   ((_Props) & (BPROP_BOOLEAN | BPROP_INTEGER | BPROP_FLOATING | BPROP_UNSIGNED))
 
-#define IS_BPROP_PRIMITIVE(_Props) (((_Props)&BPROP_PRIMITIVE) != 0)
+#define IS_BPROP_PRIMITIVE(_Props) (((_Props) & BPROP_PRIMITIVE) != 0)
 
-#define IS_BPROP_BOOL(_Props) (((_Props)&BPROP_BOOLEAN) != 0)
+#define IS_BPROP_BOOL(_Props) (((_Props) & BPROP_BOOLEAN) != 0)
 
-#define IS_BPROP_FLOAT(_Props) (((_Props)&BPROP_FLOATING) != 0)
+#define IS_BPROP_FLOAT(_Props) (((_Props) & BPROP_FLOATING) != 0)
 
 #define IS_BPROP_SINT(_Props)                                                  \
   (((_Props) & (BPROP_INTEGER | BPROP_UNSIGNED | BPROP_BOOLEAN)) ==            \
@@ -361,20 +361,20 @@ enum ArBasicKind {
 #define IS_BPROP_AINT(_Props)                                                  \
   (((_Props) & (BPROP_INTEGER | BPROP_BOOLEAN)) == BPROP_INTEGER)
 
-#define IS_BPROP_STREAM(_Props) (((_Props)&BPROP_STREAM) != 0)
+#define IS_BPROP_STREAM(_Props) (((_Props) & BPROP_STREAM) != 0)
 
-#define IS_BPROP_SAMPLER(_Props) (((_Props)&BPROP_SAMPLER) != 0)
+#define IS_BPROP_SAMPLER(_Props) (((_Props) & BPROP_SAMPLER) != 0)
 
-#define IS_BPROP_TEXTURE(_Props) (((_Props)&BPROP_TEXTURE) != 0)
+#define IS_BPROP_TEXTURE(_Props) (((_Props) & BPROP_TEXTURE) != 0)
 
-#define IS_BPROP_OBJECT(_Props) (((_Props)&BPROP_OBJECT) != 0)
+#define IS_BPROP_OBJECT(_Props) (((_Props) & BPROP_OBJECT) != 0)
 
-#define IS_BPROP_MIN_PRECISION(_Props) (((_Props)&BPROP_MIN_PRECISION) != 0)
+#define IS_BPROP_MIN_PRECISION(_Props) (((_Props) & BPROP_MIN_PRECISION) != 0)
 
 #define IS_BPROP_UNSIGNABLE(_Props)                                            \
   (IS_BPROP_AINT(_Props) && GET_BPROP_BITS(_Props) != BPROP_BITS12)
 
-#define IS_BPROP_ENUM(_Props) (((_Props)&BPROP_ENUM) != 0)
+#define IS_BPROP_ENUM(_Props) (((_Props) & BPROP_ENUM) != 0)
 
 const UINT g_uBasicKindProps[] = {
     BPROP_PRIMITIVE | BPROP_BOOLEAN | BPROP_INTEGER | BPROP_NUMERIC |
@@ -3381,7 +3381,12 @@ private:
         paramTypes.push_back(context.UnsignedLongLongTy);
         break;
       case LICOMPTYPE_UINT:
-        paramTypes.push_back(context.UnsignedIntTy);
+        if (pArgs[i].uLegalTemplates == LITEMPLATE_VECTOR) {
+          paramTypes.push_back(LookupVectorType(
+              HLSLScalarType::HLSLScalarType_uint32, pArgs[i].uCols));
+        } else {
+          paramTypes.push_back(context.UnsignedIntTy);
+        }
         break;
       case LICOMPTYPE_VOID:
         paramTypes.push_back(context.VoidTy);
@@ -11168,8 +11173,7 @@ static void DiagnoseCalculateLOD(Sema &S, FunctionDecl *FD, SourceLocation Loc,
 
   if (!locallyVisited && !SM->IsSM68Plus()) {
     Diags.Report(Loc, diag::warn_hlsl_intrinsic_overload_in_wrong_shader_model)
-        << FD->getNameAsString() + " with SamplerComparisonState"
-        << "6.8";
+        << FD->getNameAsString() + " with SamplerComparisonState" << "6.8";
     return;
   }
 
